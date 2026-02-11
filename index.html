@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Weather Dashboard</title>
-  <link rel="stylesheet" href="css/style.css">
+  
 </head>
 
 <body>
@@ -110,37 +110,55 @@
   </main>
 
   <script>
-    // Your API key here (replace this string)
-    const API_KEY = 'f15dfb670f87f97aa95093274121d725';
+    const API_KEY = 'f15dfb670f87f97aa95093274121d725';   // ← keep your real key here
 
-    // DOM elements
-    const cityInput = document.getElementById('cityInput');
-    const searchBtn = document.getElementById('searchBtn');
-    const currentDiv = document.getElementById('currentWeather');
+const cityInput = document.getElementById('cityInput');
+const searchBtn = document.getElementById('searchBtn');
+const currentDiv = document.getElementById('currentWeather');
 
-    // Event listener (we'll talk about this on roadmap "Functions & Events")
-    searchBtn.addEventListener('click', () => {
-      const city = cityInput.value.trim();
-      if (city) {
-        getCurrentWeather(city);
-      }
-    });
+searchBtn.addEventListener('click', () => {
+  const city = cityInput.value.trim();
+  if (city) getCurrentWeather(city);
+});
 
-    // Function to fetch weather
-    async function getCurrentWeather(city) {
-      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`;
+async function getCurrentWeather(city) {
+  const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`;
 
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
 
-        console.log('API Response:', data);   // ← Look at this in console!
-        // We'll display it next
-
-      } catch (error) {
-        console.error('Error fetching weather:', error);
-      }
+    if (data.cod !== 200) {
+      currentDiv.innerHTML = `<p style="color:#f87171;">City not found 😕</p>`;
+      return;
     }
+
+    // Build the beautiful card
+    const temp = Math.round(data.main.temp);
+    const feels = Math.round(data.main.feels_like);
+    const desc = data.weather[0].description;
+    const icon = data.weather[0].icon;
+    const cityName = data.name;
+    const country = data.sys.country;
+
+    currentDiv.innerHTML = `
+      <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${desc}">
+      <h2>${cityName}, ${country}</h2>
+      <h1>${temp}°C</h1>
+      <p>Feels like ${feels}°C</p>
+      <p>${desc}</p>
+    `;
+
+  } catch (error) {
+    console.error('Error:', error);
+    currentDiv.innerHTML = `<p style="color:#f87171;">Something went wrong. Try again.</p>`;
+  }
+}
+
+// Bonus: Press Enter in the input field also searches
+cityInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') searchBtn.click();
+});
   </script>
 </body>
 
