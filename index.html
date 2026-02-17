@@ -10,7 +10,8 @@
 
 <body>
   <header>
-    <style>
+    
+    <style> 
       body {
         font-family: system-ui, sans-serif;
         background: #0f172a;
@@ -19,7 +20,7 @@
         padding: 20px;
         min-height: 100vh;
       }
-
+        /*this is the style sheet of the application*/
       header {
         text-align: center;
         margin-bottom: 40px;
@@ -110,34 +111,38 @@
   </main>
 
   <script>
-    const API_KEY = 'f15dfb670f87f97aa95093274121d725';   // ← keep your real key here
+    const API_KEY = 'YOUR_REAL_KEY';   // keep yours
 
 const cityInput = document.getElementById('cityInput');
 const searchBtn = document.getElementById('searchBtn');
 const currentDiv = document.getElementById('currentWeather');
+const forecastDiv = document.getElementById('forecast');
 
 searchBtn.addEventListener('click', () => {
   const city = cityInput.value.trim();
-  if (city) getCurrentWeather(city);
+  if (city) {
+    getCurrentWeather(city);
+    getForecast(city);        // ← new line
+  }
 });
 
 async function getCurrentWeather(city) {
   const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`;
-
+  
   try {
-    const response = await fetch(url);
-    const data = await response.json();
+    const res = await fetch(url);
+    const data = await res.json();
 
     if (data.cod !== 200) {
-      currentDiv.innerHTML = `<p style="color:#f87171;">City not found 😕</p>`;
+      currentDiv.innerHTML = `<p style="color:#f87171;">City not found</p>`;
       return;
     }
 
-    // Build the beautiful card
     const temp = Math.round(data.main.temp);
     const feels = Math.round(data.main.feels_like);
     const desc = data.weather[0].description;
     const icon = data.weather[0].icon;
+    const humi = day.main.humidity;
     const cityName = data.name;
     const country = data.sys.country;
 
@@ -147,16 +152,50 @@ async function getCurrentWeather(city) {
       <h1>${temp}°C</h1>
       <p>Feels like ${feels}°C</p>
       <p>${desc}</p>
+      <p>${humi}</P>
     `;
-
-  } catch (error) {
-    console.error('Error:', error);
-    currentDiv.innerHTML = `<p style="color:#f87171;">Something went wrong. Try again.</p>`;
+  } catch (err) {
+    currentDiv.innerHTML = `<p style="color:#f87171;">Error loading weather</p>`;
   }
 }
 
-// Bonus: Press Enter in the input field also searches
-cityInput.addEventListener('keypress', (e) => {
+async function getForecast(city) {
+  const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${API_KEY}&units=metric`;
+  
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    forecastDiv.innerHTML = '';   // clear old cards
+
+    // We take every 8th item → once per day (3 days)
+    for (let i = 0; i < 24; i += 8) {
+      const day = data.list[i];
+      const date = new Date(day.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' });
+      const temp = Math.round(day.main.temp);
+      const icon = day.weather[0].icon;
+      const desc = day.weather[0].description;
+      const humi = day.main.humidity;
+
+      const cardHTML = `
+        <div class="forecast-card">
+          <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${desc}">
+          <h3>${date}</h3>
+          <div class="temp">${temp}°C</div>
+          <p>${desc}</p>
+          <p>${humi}</p>
+        </div>
+      `;
+
+      forecastDiv.innerHTML += cardHTML;
+    }
+  } catch (err) {
+    forecastDiv.innerHTML = `<p style="color:#f87171;">Could not load forecast</p>`;
+  }
+}
+
+// Press Enter also searches
+cityInput.addEventListener('keypress', e => {
   if (e.key === 'Enter') searchBtn.click();
 });
   </script>
